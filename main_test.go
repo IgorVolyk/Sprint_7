@@ -5,6 +5,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestMainHandlerWhenOk(t *testing.T) {
@@ -14,9 +16,9 @@ func TestMainHandlerWhenOk(t *testing.T) {
 	handler := http.HandlerFunc(mainHandle)
 	handler.ServeHTTP(responseRecorder, req)
 
-	if status := responseRecorder.Code; status != http.StatusOK {
-		t.Errorf("expected status code: %d, got %d", http.StatusOK, status)
-	}
+	require.Equal(t, http.StatusOK, responseRecorder.Code, "expected status code 200")
+	expectedBody := "Мир кофе,Сладкоежка"
+	require.Equal(t, expectedBody, responseRecorder.Body.String(), "ответ должен содержать первые 2 кафе")
 }
 
 func TestMainHandler_WrongCity(t *testing.T) {
@@ -25,12 +27,8 @@ func TestMainHandler_WrongCity(t *testing.T) {
 	handler := http.HandlerFunc(mainHandle)
 	handler.ServeHTTP(responseRecorder, req)
 
-	if status := responseRecorder.Code; status != http.StatusBadRequest {
-		t.Errorf("expected status code: %d, got %d", http.StatusBadRequest, status)
-	}
-	if body := responseRecorder.Body.String(); body != "wrong city" {
-		t.Errorf("expected 'wrong city', got %s", body)
-	}
+	require.Equal(t, http.StatusBadRequest, responseRecorder.Code, "expected status code 400")
+	require.Equal(t, "wrong city", responseRecorder.Body.String(), "expected 'wrong city'")
 }
 func TestMainHandlerWhenCountMoreThanTotal(t *testing.T) {
 	totalCount := 4
@@ -40,14 +38,9 @@ func TestMainHandlerWhenCountMoreThanTotal(t *testing.T) {
 	handler := http.HandlerFunc(mainHandle)
 	handler.ServeHTTP(responseRecorder, req)
 
-	if status := responseRecorder.Code; status != http.StatusOK {
-		t.Fatalf("expected status code: %d, got %d", http.StatusOK, status)
-	}
-
+	require.Equal(t, http.StatusOK, responseRecorder.Code, "expected status code 200")
 	body := responseRecorder.Body.String()
 	list := strings.Split(body, ",")
 
-	if len(list) != totalCount {
-		t.Errorf("expected cafe count: %d, got %d", totalCount, len(list))
-	}
+	require.Equal(t, totalCount, len(list), "количество кафе должно быть равно 4")
 }
